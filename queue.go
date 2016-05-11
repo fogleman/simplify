@@ -1,11 +1,6 @@
 package simplify
 
-type Item struct {
-	Score float64
-	Index int
-}
-
-type PriorityQueue []*Item
+type PriorityQueue []*Pair
 
 func (pq PriorityQueue) Len() int {
 	return len(pq)
@@ -22,7 +17,7 @@ func (pq PriorityQueue) Swap(i, j int) {
 }
 
 func (pq *PriorityQueue) Push(x interface{}) {
-	item := x.(*Item)
+	item := x.(*Pair)
 	item.Index = len(*pq)
 	*pq = append(*pq, item)
 }

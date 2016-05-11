@@ -5,14 +5,21 @@ type PairKey struct {
 }
 
 type Pair struct {
-	A, B Vertex
-	Key  PairKey
+	A, B  Vertex
+	Score float64
+	Index int
 }
 
-func MakePair(a, b Vertex) Pair {
+func NewPair(a, b Vertex) *Pair {
 	if b.Less(a.Vector) {
 		a, b = b, a
 	}
-	key := PairKey{a.Vector, b.Vector}
-	return Pair{a, b, key}
+	q := a.Quadric.Add(b.Quadric)
+	v := q.QuadricVector()
+	s := q.QuadricError(v)
+	return &Pair{a, b, s, -1}
+}
+
+func (p *Pair) Key() PairKey {
+	return PairKey{p.A.Vector, p.B.Vector}
 }

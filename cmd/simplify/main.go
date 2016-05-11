@@ -9,9 +9,10 @@ import (
 
 func main() {
 	path := os.Args[1]
+	fmt.Println(path)
 	mesh, err := simplify.LoadBinarySTL(path)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(len(mesh.Triangles))
+	mesh.Simplify()
 }

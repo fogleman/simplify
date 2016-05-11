@@ -1,19 +1,25 @@
 package simplify
 
-import "fmt"
+import (
+	"container/heap"
+	"fmt"
+)
 
 type Mesh struct {
 	Triangles []*Triangle
 }
 
 func NewMesh(triangles []*Triangle) *Mesh {
-	mesh := &Mesh{triangles}
-	mesh.Initialize()
-	return mesh
+	return &Mesh{triangles}
 }
 
-func (mesh *Mesh) Initialize() {
+func (m *Mesh) SaveBinarySTL(path string) error {
+	return SaveBinarySTL(path, m)
+}
+
+func (mesh *Mesh) Simplify() *Mesh {
 	// find distinct vertexes & associated triangles
+	fmt.Println("find distinct vertexes & associated triangles")
 	triangles := make(map[Vector][]*Triangle)
 	for _, t := range mesh.Triangles {
 		triangles[t.V1] = append(triangles[t.V1], t)
@@ -22,25 +28,35 @@ func (mesh *Mesh) Initialize() {
 	}
 
 	// make vertexes
+	fmt.Println("make vertexes")
 	vertexes := make(map[Vector]Vertex)
 	for v, t := range triangles {
 		vertexes[v] = MakeVertex(v, t)
 	}
 
 	// find candidate pairs
-	pairs := make(map[PairKey]Pair)
+	fmt.Println("find candidate pairs")
+	pairs := make(map[PairKey]*Pair)
+	var queue PriorityQueue
 	for _, t := range mesh.Triangles {
-		var pair Pair
 		v1 := vertexes[t.V1]
 		v2 := vertexes[t.V2]
 		v3 := vertexes[t.V3]
-		pair = MakePair(v1, v2)
-		pairs[pair.Key] = pair
-		pair = MakePair(v2, v3)
-		pairs[pair.Key] = pair
-		pair = MakePair(v3, v1)
-		pairs[pair.Key] = pair
+		var p *Pair
+		p = NewPair(v1, v2)
+		pairs[p.Key()] = p
+		heap.Push(&queue, p)
+		p = NewPair(v2, v3)
+		pairs[p.Key()] = p
+		heap.Push(&queue, p)
+		p = NewPair(v3, v1)
+		pairs[p.Key()] = p
+		heap.Push(&queue, p)
 	}
+
+	// for len(queue) > 0 {
+	// 	p := heap.Pop(&queue).(*Pair)
+	// }
 
 	// TODO: pairs within a threshold distance
 
@@ -65,8 +81,6 @@ func (mesh *Mesh) Initialize() {
 	// 		// fmt.Println()
 	// 	}
 	// }
-}
 
-func (m *Mesh) SaveBinarySTL(path string) error {
-	return SaveBinarySTL(path, m)
+	return mesh
 }
