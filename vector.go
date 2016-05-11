@@ -25,6 +25,16 @@ func RandomUnitVector() Vector {
 	}
 }
 
+func (a Vector) Less(b Vector) bool {
+	if a.X != b.X {
+		return a.X < b.X
+	}
+	if a.Y != b.Y {
+		return a.Y < b.Y
+	}
+	return a.Z < b.Z
+}
+
 func (a Vector) Length() float64 {
 	return math.Sqrt(a.X*a.X + a.Y*a.Y + a.Z*a.Z)
 }

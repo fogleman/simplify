@@ -1,5 +1,7 @@
 package simplify
 
+import "fmt"
+
 type Mesh struct {
 	Triangles []*Triangle
 }
@@ -11,24 +13,40 @@ func NewMesh(triangles []*Triangle) *Mesh {
 }
 
 func (mesh *Mesh) Initialize() {
-	quadrics := make(map[Vector]Matrix)
+	// find distinct vertexes & associated triangles
 	triangles := make(map[Vector][]*Triangle)
-	edges := make(map[Edge]bool)
 	for _, t := range mesh.Triangles {
-		m := t.Quadric()
-		quadrics[t.V1] = quadrics[t.V1].Add(m)
-		quadrics[t.V2] = quadrics[t.V2].Add(m)
-		quadrics[t.V3] = quadrics[t.V3].Add(m)
 		triangles[t.V1] = append(triangles[t.V1], t)
 		triangles[t.V2] = append(triangles[t.V2], t)
 		triangles[t.V3] = append(triangles[t.V3], t)
-		edges[Edge{t.V1, t.V2}] = true
-		edges[Edge{t.V2, t.V3}] = true
-		edges[Edge{t.V3, t.V1}] = true
-		edges[Edge{t.V2, t.V1}] = true
-		edges[Edge{t.V3, t.V2}] = true
-		edges[Edge{t.V1, t.V3}] = true
 	}
+
+	// make vertexes
+	vertexes := make(map[Vector]Vertex)
+	for v, t := range triangles {
+		vertexes[v] = MakeVertex(v, t)
+	}
+
+	// find candidate pairs
+	pairs := make(map[PairKey]Pair)
+	for _, t := range mesh.Triangles {
+		var pair Pair
+		v1 := vertexes[t.V1]
+		v2 := vertexes[t.V2]
+		v3 := vertexes[t.V3]
+		pair = MakePair(v1, v2)
+		pairs[pair.Key] = pair
+		pair = MakePair(v2, v3)
+		pairs[pair.Key] = pair
+		pair = MakePair(v3, v1)
+		pairs[pair.Key] = pair
+	}
+
+	// TODO: pairs within a threshold distance
+
+	fmt.Println(len(mesh.Triangles))
+	fmt.Println(len(vertexes))
+	fmt.Println(len(pairs))
 	// for i := 0; i < 100; i++ {
 	// 	for edge := range edges {
 	// 		// fmt.Println(edge)
