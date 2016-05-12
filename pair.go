@@ -18,7 +18,7 @@ type Pair struct {
 
 func NewPair(a, b *Vertex) *Pair {
 	if b.Less(a.Vector) {
-		a, b = b, a // TODO: unneeded?
+		a, b = b, a
 	}
 	return &Pair{a, b, -1}
 }
