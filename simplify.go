@@ -61,10 +61,6 @@ func Simplify(input *Mesh) *Mesh {
 		// pop best pair
 		p := heap.Pop(&queue).(*Pair)
 
-		if p.A == p.B {
-			continue
-		}
-
 		// move A to best position
 		p.A.Vector = p.Vector()
 
@@ -111,11 +107,11 @@ func Simplify(input *Mesh) *Mesh {
 		// update pairs and prune current pair
 		vertexPairs[p.A] = nil
 		delete(vertexPairs, p.B)
+		seenPairs := make(map[PairKey]bool)
 		for q := range distinctPairs {
 			if q == p {
 				continue
 			}
-			// TODO: this produces duplicate pairs
 			if q.A == p.B {
 				q.A = p.A
 			}
@@ -124,8 +120,15 @@ func Simplify(input *Mesh) *Mesh {
 			}
 			queue.Fix(q)
 			if q.A == q.B {
+				queue.Remove(q)
 				continue
 			}
+			key := MakePairKey(q.A, q.B)
+			if _, ok := seenPairs[key]; ok {
+				queue.Remove(q)
+				continue
+			}
+			seenPairs[key] = true
 			vertexPairs[p.A] = append(vertexPairs[p.A], q)
 		}
 	}
@@ -134,7 +137,7 @@ func Simplify(input *Mesh) *Mesh {
 	distinctFaces := make(map[*Face]bool)
 	for _, faces := range vertexFaces {
 		for _, f := range faces {
-			if !f.Degenerate() {
+			if !f.Degenerate() { // TODO: why does this happen?
 				distinctFaces[f] = true
 			}
 		}

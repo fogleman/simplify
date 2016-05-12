@@ -36,3 +36,9 @@ func (pq *PriorityQueue) Pop() interface{} {
 func (pq *PriorityQueue) Fix(p *Pair) {
 	heap.Fix(pq, p.Index)
 }
+
+func (pq *PriorityQueue) Remove(p *Pair) {
+	if p.Index >= 0 {
+		heap.Remove(pq, p.Index)
+	}
+}
