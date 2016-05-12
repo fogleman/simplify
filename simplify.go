@@ -61,11 +61,15 @@ func Simplify(input *Mesh) *Mesh {
 		// pop best pair
 		p := heap.Pop(&queue).(*Pair)
 
+		if p.A == p.B {
+			continue
+		}
+
 		// move A to best position
 		p.A.Vector = p.Vector()
 
 		// update quadric matrix for A
-		p.A.Quadric = p.A.Quadric.Add(p.B.Quadric)
+		p.A.Quadric = p.Quadric()
 
 		// consolidate faces
 		distinctFaces := make(map[*Face]bool)
@@ -80,9 +84,6 @@ func Simplify(input *Mesh) *Mesh {
 		vertexFaces[p.A] = nil
 		delete(vertexFaces, p.B)
 		for f := range distinctFaces {
-			if f.Degenerate() {
-				continue
-			}
 			if f.V1 == p.B {
 				f.V1 = p.A
 			}
@@ -91,6 +92,9 @@ func Simplify(input *Mesh) *Mesh {
 			}
 			if f.V3 == p.B {
 				f.V3 = p.A
+			}
+			if f.Degenerate() {
+				continue
 			}
 			vertexFaces[p.A] = append(vertexFaces[p.A], f)
 		}
@@ -108,20 +112,21 @@ func Simplify(input *Mesh) *Mesh {
 		vertexPairs[p.A] = nil
 		delete(vertexPairs, p.B)
 		for q := range distinctPairs {
-			if p == q {
+			if q == p {
 				continue
 			}
+			// TODO: this produces duplicate pairs
 			if q.A == p.B {
 				q.A = p.A
 			}
 			if q.B == p.B {
 				q.B = p.A
 			}
+			queue.Fix(q)
 			if q.A == q.B {
 				continue
 			}
-			queue.Fix(q)
-			vertexPairs[p.A] = append(vertexPairs[p.A])
+			vertexPairs[p.A] = append(vertexPairs[p.A], q)
 		}
 	}
 
@@ -129,7 +134,9 @@ func Simplify(input *Mesh) *Mesh {
 	distinctFaces := make(map[*Face]bool)
 	for _, faces := range vertexFaces {
 		for _, f := range faces {
-			distinctFaces[f] = true
+			if !f.Degenerate() {
+				distinctFaces[f] = true
+			}
 		}
 	}
 
