@@ -2,14 +2,9 @@ package simplify
 
 type Vertex struct {
 	Vector
-	Quadric   Matrix
-	Triangles []*Triangle
+	Quadric Matrix
 }
 
-func MakeVertex(vector Vector, triangles []*Triangle) Vertex {
-	quadric := Matrix{}
-	for _, t := range triangles {
-		quadric = quadric.Add(t.Quadric())
-	}
-	return Vertex{vector, quadric, triangles}
+func NewVertex(v Vector) *Vertex {
+	return &Vertex{Vector: v}
 }

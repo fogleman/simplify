@@ -5,11 +5,7 @@ type Triangle struct {
 }
 
 func NewTriangle(v1, v2, v3 Vector) *Triangle {
-	t := Triangle{}
-	t.V1 = v1
-	t.V2 = v2
-	t.V3 = v3
-	return &t
+	return &Triangle{v1, v2, v3}
 }
 
 func (t *Triangle) Quadric() Matrix {

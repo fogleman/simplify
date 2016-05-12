@@ -14,5 +14,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	mesh.Simplify()
+	mesh = mesh.Simplify()
+	mesh.SaveBinarySTL("out.stl")
 }
