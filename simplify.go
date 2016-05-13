@@ -2,7 +2,7 @@ package simplify
 
 import "container/heap"
 
-func Simplify(input *Mesh) *Mesh {
+func Simplify(input *Mesh, factor float64) *Mesh {
 	// find distinct vertices
 	vectorVertex := make(map[Vector]*Vertex)
 	for _, t := range input.Triangles {
@@ -36,28 +36,31 @@ func Simplify(input *Mesh) *Mesh {
 
 	// find distinct pairs
 	// TODO: pair vertices within a threshold distance of each other
-	keyPair := make(map[PairKey]*Pair)
+	pairs := make(map[PairKey]*Pair)
 	for _, t := range input.Triangles {
 		v1 := vectorVertex[t.V1]
 		v2 := vectorVertex[t.V2]
 		v3 := vectorVertex[t.V3]
-		keyPair[MakePairKey(v1, v2)] = NewPair(v1, v2)
-		keyPair[MakePairKey(v2, v3)] = NewPair(v2, v3)
-		keyPair[MakePairKey(v3, v1)] = NewPair(v3, v1)
+		pairs[MakePairKey(v1, v2)] = NewPair(v1, v2)
+		pairs[MakePairKey(v2, v3)] = NewPair(v2, v3)
+		pairs[MakePairKey(v3, v1)] = NewPair(v3, v1)
 	}
 
 	// enqueue pairs and map vertex => pairs
 	var queue PriorityQueue
 	vertexPairs := make(map[*Vertex][]*Pair)
-	for _, p := range keyPair {
+	for _, p := range pairs {
 		heap.Push(&queue, p)
 		vertexPairs[p.A] = append(vertexPairs[p.A], p)
 		vertexPairs[p.B] = append(vertexPairs[p.B], p)
 	}
 
+	removedFaces := make(map[*Face]bool)
+
 	// simplify
-	n := len(queue) / 4
-	for len(queue) > n {
+	numFaces := len(input.Triangles)
+	target := int(float64(numFaces) * factor)
+	for numFaces > target {
 		// pop best pair
 		p := heap.Pop(&queue).(*Pair)
 
@@ -90,6 +93,11 @@ func Simplify(input *Mesh) *Mesh {
 				f.V3 = p.A
 			}
 			if f.Degenerate() {
+				// TODO: remove f from vertexFaces[f.V1|f.V2|f.V3]
+				if _, ok := removedFaces[f]; !ok {
+					numFaces--
+					removedFaces[f] = true
+				}
 				continue
 			}
 			vertexFaces[p.A] = append(vertexFaces[p.A], f)

@@ -12,6 +12,6 @@ func (m *Mesh) SaveBinarySTL(path string) error {
 	return SaveBinarySTL(path, m)
 }
 
-func (m *Mesh) Simplify() *Mesh {
-	return Simplify(m)
+func (m *Mesh) Simplify(factor float64) *Mesh {
+	return Simplify(m, factor)
 }
