@@ -23,7 +23,7 @@ written in Go.
     Input mesh contains 270021 faces
     Simplifying to 10% of original...
     Output mesh contains 27001 faces
-    Writing bunny.stl
+    Writing out.stl
 
 ### API Usage
 

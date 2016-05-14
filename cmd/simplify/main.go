@@ -30,6 +30,6 @@ func main() {
 	fmt.Printf("Simplifying to %d%% of original...\n", int(factor*100))
 	mesh = mesh.Simplify(factor)
 	fmt.Printf("Output mesh contains %d faces\n", len(mesh.Triangles))
-	fmt.Printf("Writing %s\n", args[0])
+	fmt.Printf("Writing %s\n", args[1])
 	mesh.SaveBinarySTL(args[1])
 }
