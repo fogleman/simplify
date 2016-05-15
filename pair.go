@@ -12,15 +12,16 @@ func MakePairKey(a, b *Vertex) PairKey {
 }
 
 type Pair struct {
-	A, B  *Vertex
-	Index int
+	A, B    *Vertex
+	Index   int
+	Removed bool
 }
 
 func NewPair(a, b *Vertex) *Pair {
 	if b.Less(a.Vector) {
 		a, b = b, a
 	}
-	return &Pair{a, b, -1}
+	return &Pair{a, b, -1, false}
 }
 
 func (p *Pair) Quadric() Matrix {

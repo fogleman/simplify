@@ -55,8 +55,6 @@ func Simplify(input *Mesh, factor float64) *Mesh {
 		vertexPairs[p.B] = append(vertexPairs[p.B], p)
 	}
 
-	removedFaces := make(map[*Face]bool)
-
 	// simplify
 	numFaces := len(input.Triangles)
 	target := int(float64(numFaces) * factor)
@@ -64,80 +62,92 @@ func Simplify(input *Mesh, factor float64) *Mesh {
 		// pop best pair
 		p := heap.Pop(&queue).(*Pair)
 
-		// move A to best position
-		p.A.Vector = p.Vector()
+		if p.Removed {
+			continue
+		}
+		p.Removed = true
 
-		// update quadric matrix for A
-		p.A.Quadric = p.Quadric()
-
-		// consolidate faces
+		// get related faces
 		distinctFaces := make(map[*Face]bool)
 		for _, f := range vertexFaces[p.A] {
-			distinctFaces[f] = true
+			if !f.Removed {
+				distinctFaces[f] = true
+			}
 		}
 		for _, f := range vertexFaces[p.B] {
-			distinctFaces[f] = true
+			if !f.Removed {
+				distinctFaces[f] = true
+			}
 		}
 
-		// update faces and prune degenerate faces
-		vertexFaces[p.A] = nil
-		delete(vertexFaces, p.B)
-		for f := range distinctFaces {
-			if f.V1 == p.B {
-				f.V1 = p.A
-			}
-			if f.V2 == p.B {
-				f.V2 = p.A
-			}
-			if f.V3 == p.B {
-				f.V3 = p.A
-			}
-			if f.Degenerate() {
-				// TODO: remove f from vertexFaces[f.V1|f.V2|f.V3]
-				if _, ok := removedFaces[f]; !ok {
-					numFaces--
-					removedFaces[f] = true
-				}
-				continue
-			}
-			vertexFaces[p.A] = append(vertexFaces[p.A], f)
-		}
-
-		// consolidate pairs
+		// get related pairs
 		distinctPairs := make(map[*Pair]bool)
 		for _, q := range vertexPairs[p.A] {
-			distinctPairs[q] = true
+			if !q.Removed {
+				distinctPairs[q] = true
+			}
 		}
 		for _, q := range vertexPairs[p.B] {
-			distinctPairs[q] = true
+			if !q.Removed {
+				distinctPairs[q] = true
+			}
+		}
+
+		// create the new vertex
+		v := &Vertex{p.Vector(), p.Quadric()}
+
+		// update faces
+		delete(vertexFaces, p.A)
+		delete(vertexFaces, p.B)
+		for f := range distinctFaces {
+			f.Removed = true
+			numFaces--
+			v1, v2, v3 := f.V1, f.V2, f.V3
+			if v1 == p.A || v1 == p.B {
+				v1 = v
+			}
+			if v2 == p.A || v2 == p.B {
+				v2 = v
+			}
+			if v3 == p.A || v3 == p.B {
+				v3 = v
+			}
+			f = NewFace(v1, v2, v3)
+			if !f.Degenerate() {
+				numFaces++
+				vertexFaces[v1] = append(vertexFaces[v1], f)
+				vertexFaces[v2] = append(vertexFaces[v2], f)
+				vertexFaces[v3] = append(vertexFaces[v3], f)
+			}
 		}
 
 		// update pairs and prune current pair
-		vertexPairs[p.A] = nil
+		delete(vertexPairs, p.A)
 		delete(vertexPairs, p.B)
-		seenPairs := make(map[PairKey]bool)
+		seen := make(map[Vector]bool)
 		for q := range distinctPairs {
-			if q == p {
+			q.Removed = true
+			heap.Remove(&queue, q.Index)
+			a, b := q.A, q.B
+			if a == p.A || a == p.B {
+				a = v
+			}
+			if b == p.A || b == p.B {
+				b = v
+			}
+			if b == v {
+				// swap so that a == v
+				a, b = b, a
+			}
+			if _, ok := seen[b.Vector]; ok {
+				// only want distinct neighbors
 				continue
 			}
-			if q.A == p.B {
-				q.A = p.A
-			}
-			if q.B == p.B {
-				q.B = p.A
-			}
-			queue.Fix(q)
-			if q.A == q.B {
-				queue.Remove(q)
-				continue
-			}
-			key := MakePairKey(q.A, q.B)
-			if _, ok := seenPairs[key]; ok {
-				queue.Remove(q)
-				continue
-			}
-			seenPairs[key] = true
-			vertexPairs[p.A] = append(vertexPairs[p.A], q)
+			seen[b.Vector] = true
+			q = NewPair(a, b)
+			heap.Push(&queue, q)
+			vertexPairs[a] = append(vertexPairs[a], q)
+			vertexPairs[b] = append(vertexPairs[b], q)
 		}
 	}
 
@@ -145,7 +155,7 @@ func Simplify(input *Mesh, factor float64) *Mesh {
 	distinctFaces := make(map[*Face]bool)
 	for _, faces := range vertexFaces {
 		for _, f := range faces {
-			if !f.Degenerate() { // TODO: why does this happen?
+			if !f.Removed {
 				distinctFaces[f] = true
 			}
 		}

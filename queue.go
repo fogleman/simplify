@@ -1,7 +1,5 @@
 package simplify
 
-import "container/heap"
-
 type PriorityQueue []*Pair
 
 func (pq PriorityQueue) Len() int {
@@ -31,14 +29,4 @@ func (pq *PriorityQueue) Pop() interface{} {
 	item.Index = -1
 	*pq = old[:n-1]
 	return item
-}
-
-func (pq *PriorityQueue) Fix(p *Pair) {
-	heap.Fix(pq, p.Index)
-}
-
-func (pq *PriorityQueue) Remove(p *Pair) {
-	if p.Index >= 0 {
-		heap.Remove(pq, p.Index)
-	}
 }
