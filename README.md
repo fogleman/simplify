@@ -34,3 +34,9 @@ mesh, err := simplify.LoadBinarySTL(inputPath)
 mesh = mesh.Simplify(factor)
 mesh.SaveBinarySTL(outputPath)
 ```
+
+---
+
+![Animated](http://i.imgur.com/LXke1ur.gif)
+
+<p align="center">Iteratively simplifying by 50% until only 16 faces remain</p>
