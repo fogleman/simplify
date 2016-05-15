@@ -1,5 +1,7 @@
 package simplify
 
+import "math"
+
 type PairKey struct {
 	A, B Vector
 }
@@ -30,13 +32,33 @@ func (p *Pair) Quadric() Matrix {
 }
 
 func (p *Pair) Vector() Vector {
-	return p.Quadric().QuadricVector()
+	q := p.Quadric()
+	if math.Abs(q.Determinant()) > 1e-12 {
+		return q.QuadricVector()
+	}
+	// cannot compute best vector with matrix
+	// look for best vector along edge
+	const n = 32
+	a := p.A.Vector
+	b := p.B.Vector
+	d := b.Sub(a)
+	bestE := -1.0
+	bestV := Vector{}
+	for i := 0; i <= n; i++ {
+		t := float64(i) / n
+		v := a.Add(d.MulScalar(t))
+		e := q.QuadricError(v)
+		if bestE < 0 || e < bestE {
+			bestE = e
+			bestV = v
+		}
+	}
+	return bestV
 }
 
 func (p *Pair) Error() float64 {
 	if p.CachedError < 0 {
-		q := p.Quadric()
-		p.CachedError = q.QuadricError(q.QuadricVector())
+		p.CachedError = p.Quadric().QuadricError(p.Vector())
 	}
 	return p.CachedError
 }
