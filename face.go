@@ -16,5 +16,5 @@ func (f *Face) Area() float64 {
 }
 
 func (f *Face) Degenerate() bool {
-	return f.Area() < 1e-9
+	return f.Area() <= 0
 }

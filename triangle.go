@@ -9,9 +9,7 @@ func NewTriangle(v1, v2, v3 Vector) *Triangle {
 }
 
 func (t *Triangle) Quadric() Matrix {
-	e1 := t.V2.Sub(t.V1)
-	e2 := t.V3.Sub(t.V1)
-	n := e1.Cross(e2).Normalize()
+	n := t.Normal()
 	x, y, z := t.V1.X, t.V1.Y, t.V1.Z
 	a, b, c := n.X, n.Y, n.Z
 	d := -a*x - b*y - c*z
@@ -21,4 +19,10 @@ func (t *Triangle) Quadric() Matrix {
 		a * c, b * c, c * c, c * d,
 		a * d, b * d, c * d, d * d,
 	}
+}
+
+func (t *Triangle) Normal() Vector {
+	e1 := t.V2.Sub(t.V1)
+	e2 := t.V3.Sub(t.V1)
+	return e1.Cross(e2).Normalize()
 }
