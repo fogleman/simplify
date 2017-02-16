@@ -34,7 +34,10 @@ func (p *Pair) Quadric() Matrix {
 func (p *Pair) Vector() Vector {
 	q := p.Quadric()
 	if math.Abs(q.Determinant()) > 1e-3 {
-		return q.QuadricVector()
+		v := q.QuadricVector()
+		if !math.IsNaN(v.X) && !math.IsNaN(v.Y) && !math.IsNaN(v.Z) {
+			return v
+		}
 	}
 	// cannot compute best vector with matrix
 	// look for best vector along edge
