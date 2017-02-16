@@ -33,7 +33,7 @@ func (p *Pair) Quadric() Matrix {
 
 func (p *Pair) Vector() Vector {
 	q := p.Quadric()
-	if math.Abs(q.Determinant()) > 1e-12 {
+	if math.Abs(q.Determinant()) > 1e-3 {
 		return q.QuadricVector()
 	}
 	// cannot compute best vector with matrix
