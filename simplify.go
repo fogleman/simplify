@@ -97,11 +97,9 @@ func Simplify(input *Mesh, factor float64) *Mesh {
 		v := &Vertex{p.Vector(), p.Quadric()}
 
 		// update faces
-		delete(vertexFaces, p.A)
-		delete(vertexFaces, p.B)
+		newFaces := make([]*Face, 0, len(distinctFaces))
+		valid := true
 		for f := range distinctFaces {
-			f.Removed = true
-			numFaces--
 			v1, v2, v3 := f.V1, f.V2, f.V3
 			if v1 == p.A || v1 == p.B {
 				v1 = v
@@ -112,13 +110,30 @@ func Simplify(input *Mesh, factor float64) *Mesh {
 			if v3 == p.A || v3 == p.B {
 				v3 = v
 			}
-			f = NewFace(v1, v2, v3)
-			if !f.Degenerate() {
-				numFaces++
-				vertexFaces[v1] = append(vertexFaces[v1], f)
-				vertexFaces[v2] = append(vertexFaces[v2], f)
-				vertexFaces[v3] = append(vertexFaces[v3], f)
+			face := NewFace(v1, v2, v3)
+			if face.Degenerate() {
+				continue
 			}
+			if face.Normal().Dot(f.Normal()) < 1e-3 {
+				valid = false
+				break
+			}
+			newFaces = append(newFaces, face)
+		}
+		if !valid {
+			continue
+		}
+		delete(vertexFaces, p.A)
+		delete(vertexFaces, p.B)
+		for f := range distinctFaces {
+			f.Removed = true
+			numFaces--
+		}
+		for _, f := range newFaces {
+			numFaces++
+			vertexFaces[f.V1] = append(vertexFaces[f.V1], f)
+			vertexFaces[f.V2] = append(vertexFaces[f.V2], f)
+			vertexFaces[f.V3] = append(vertexFaces[f.V3], f)
 		}
 
 		// update pairs and prune current pair
